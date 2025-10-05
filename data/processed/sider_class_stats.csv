@@ -1,0 +1,28 @@
+ADR,Positive_Count,Negative_Count,Positive_Ratio
+Product issues,22,1405,0.015416958654519973
+"Pregnancy, puerperium and perinatal conditions",125,1302,0.08759635599159075
+Surgical and medical procedures,213,1214,0.14926419060967064
+Social circumstances,251,1176,0.17589348283111422
+"Congenital, familial and genetic disorders",253,1174,0.17729502452697968
+Endocrine disorders,323,1104,0.2263489838822705
+"Neoplasms benign, malignant and unspecified (incl cysts and polyps)",376,1051,0.263489838822705
+Ear and labyrinth disorders,659,768,0.46180798878766643
+Reproductive system and breast disorders,727,700,0.5094604064470918
+Hepatobiliary disorders,743,684,0.5206727400140154
+Eye disorders,876,551,0.613875262789068
+Blood and lymphatic system disorders,885,542,0.6201822004204625
+Renal and urinary disorders,911,516,0.6384022424667134
+"Injury, poisoning and procedural complications",946,481,0.6629292221443588
+Cardiac disorders,988,439,0.6923615977575333
+Metabolism and nutrition disorders,996,431,0.6979677645409951
+Musculoskeletal and connective tissue disorders,997,430,0.6986685353889278
+Infections and infestations,1006,421,0.7049754730203224
+Psychiatric disorders,1016,411,0.7119831814996496
+Immune system disorders,1024,403,0.7175893482831114
+"Respiratory, thoracic and mediastinal disorders",1060,367,0.7428170988086895
+Vascular disorders,1108,319,0.7764540995094604
+Investigations,1151,276,0.8065872459705676
+General disorders and administration site conditions,1292,135,0.905395935529082
+Gastrointestinal disorders,1298,129,0.9096005606166784
+Nervous system disorders,1304,123,0.9138051857042747
+Skin and subcutaneous tissue disorders,1318,109,0.9236159775753329

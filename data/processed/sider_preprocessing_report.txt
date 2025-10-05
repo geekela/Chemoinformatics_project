@@ -1,0 +1,44 @@
+SIDER Dataset Preprocessing Report
+==================================================
+
+[2025-10-05 18:34:43] Loading SIDER dataset...
+[2025-10-05 18:34:43] Loaded 1427 molecules with 27 ADR classes
+[2025-10-05 18:34:43] Validating SMILES...
+[2025-10-05 18:34:43] Found 0 invalid SMILES
+[2025-10-05 18:34:43] Canonicalizing SMILES...
+[2025-10-05 18:34:43] Found 0 duplicate entries
+[2025-10-05 18:34:43] Analyzing class distribution...
+[2025-10-05 18:34:43] Computing molecular properties...
+[2025-10-05 18:34:44] Creating visualizations...
+[2025-10-05 18:34:44] Saving results...
+[2025-10-05 18:34:44] Saved cleaned data to data/processed/sider_cleaned.csv
+
+Class Distribution Summary:
+                                                                    ADR  Positive_Count  Negative_Count  Positive_Ratio
+2                                                        Product issues              22            1405        0.015417
+22                       Pregnancy, puerperium and perinatal conditions             125            1302        0.087596
+13                                      Surgical and medical procedures             213            1214        0.149264
+7                                                  Social circumstances             251            1176        0.175893
+17                           Congenital, familial and genetic disorders             253            1174        0.177295
+12                                                  Endocrine disorders             323            1104        0.226349
+10  Neoplasms benign, malignant and unspecified (incl cysts and polyps)             376            1051        0.263490
+23                                          Ear and labyrinth disorders             659             768        0.461808
+9                              Reproductive system and breast disorders             727             700        0.509460
+0                                               Hepatobiliary disorders             743             684        0.520673
+3                                                         Eye disorders             876             551        0.613875
+15                                 Blood and lymphatic system disorders             885             542        0.620182
+21                                          Renal and urinary disorders             911             516        0.638402
+26                       Injury, poisoning and procedural complications             946             481        0.662929
+24                                                    Cardiac disorders             988             439        0.692362
+1                                    Metabolism and nutrition disorders             996             431        0.697968
+5                       Musculoskeletal and connective tissue disorders             997             430        0.698669
+18                                          Infections and infestations            1006             421        0.704975
+20                                                Psychiatric disorders            1016             411        0.711983
+8                                               Immune system disorders            1024             403        0.717589
+19                      Respiratory, thoracic and mediastinal disorders            1060             367        0.742817
+14                                                   Vascular disorders            1108             319        0.776454
+4                                                        Investigations            1151             276        0.806587
+11                 General disorders and administration site conditions            1292             135        0.905396
+6                                            Gastrointestinal disorders            1298             129        0.909601
+25                                             Nervous system disorders            1304             123        0.913805
+16                               Skin and subcutaneous tissue disorders            1318             109        0.923616
