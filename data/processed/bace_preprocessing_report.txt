@@ -1,0 +1,23 @@
+BACE Dataset Preprocessing Report
+==================================================
+
+[2025-10-05 20:48:24] --- BACE PREPROCESSING PIPELINE STARTING ---
+[2025-10-05 20:48:24] Loading BACE dataset...
+[2025-10-05 20:48:24] Loaded 1513 molecules.
+[2025-10-05 20:48:24] Validating SMILES...
+[2025-10-05 20:48:25] Found 0 invalid SMILES, removing them.
+[2025-10-05 20:48:25] Canonicalizing SMILES...
+[2025-10-05 20:48:25] Removed 0 duplicate entries based on canonical SMILES.
+[2025-10-05 20:48:25] Analyzing target distribution for pIC50...
+[2025-10-05 20:48:25] Target statistics:
+        count      mean       std       min       25%       50%   75%        max
+pIC50  1513.0  6.521991  1.342417  2.544546  5.585027  6.761954  7.54  10.522879
+[2025-10-05 20:48:25] Calculating basic molecular properties...
+[2025-10-05 20:48:58] Descriptors added. Processed DataFrame shape: (1513, 219)
+[2025-10-05 20:48:58] Creating visualizations...
+[2025-10-05 20:49:00] Saving results...
+[2025-10-05 20:49:00] Saved processed data to data/processed/bace_processed_data.csv (Shape: (1513, 219))
+
+Target Distribution Summary:
+        count      mean       std       min       25%       50%   75%        max
+pIC50  1513.0  6.521991  1.342417  2.544546  5.585027  6.761954  7.54  10.522879
