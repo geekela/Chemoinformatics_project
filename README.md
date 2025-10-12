@@ -102,7 +102,7 @@ The project uses the following key libraries:
 5. **Visualization Generation**: Automatic creation of summary plots
 6. **Report Generation**: Comprehensive text and CSV reports
 
-## 📊 Data Insights
+## Data Insights
 
 ### Class Distribution Highlights
 
@@ -128,7 +128,7 @@ The SIDER dataset shows significant class imbalance:
 - **Heavy Atoms**: 1 - 492 atoms (median: 25 atoms)
 - **Rings**: 0 - 46 rings (median: 3 rings)
 
-## 🎯 Next Steps
+## Next Steps
 
 This preprocessing pipeline sets the foundation for:
 
@@ -138,7 +138,7 @@ This preprocessing pipeline sets the foundation for:
 4. **Model Evaluation**: Comprehensive performance assessment
 5. **Visualization**: Advanced molecular and model visualizations
 
-## 📝 Usage Examples
+## Usage Examples
 
 ### Running the Preprocessing Pipeline
 
@@ -170,7 +170,7 @@ print(f"Dataset shape: {cleaned_data.shape}")
 print(f"Classes: {len(class_stats)}")
 ```
 
-## 🤝 Contributing
+## Contributing
 
 This project is designed for chemoinformatics research and education. Feel free to:
 - Extend the preprocessing pipeline
@@ -178,7 +178,7 @@ This project is designed for chemoinformatics research and education. Feel free 
 - Implement machine learning models
 - Improve visualization capabilities
 
-## 📄 License
+## License
 
 This project is for educational and research purposes. Please cite appropriately if used in academic work.
 
