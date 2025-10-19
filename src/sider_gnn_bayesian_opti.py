@@ -4,8 +4,9 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from src.sider_gnn import SIDERGraphDataset, MPNN_SIDER
 
-def objective(trial):
+def objective(trial, train_loader, val_loader):
 
     params = {
         'lr': trial.suggest_float('lr', 1e-4, 1e-2, log=True),
@@ -36,6 +37,6 @@ def objective(trial):
 
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
-    final_val_loss = trainer.callback_metrics.get("val_loss", float('inf'))
+    final_val_loss = trainer.callback_metri#cs.get("val_loss", float('inf'))
 
     return final_val_loss
