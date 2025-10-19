@@ -9,6 +9,7 @@ from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.nn import NNConv, MLP, global_add_pool
 from ogb.utils import smiles2graph
 import pytorch_lightning as pl
+import numpy as np
 from ogb.graphproppred.mol_encoder import AtomEncoder, BondEncoder
 from sklearn.metrics import roc_auc_score
 
