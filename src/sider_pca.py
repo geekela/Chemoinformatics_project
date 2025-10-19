@@ -13,9 +13,6 @@ def analyze_pca_variance(df_final: pd.DataFrame):
     2. Scales the features.
     3. Computes the first 10 principal components.
     4. Plots the explained variance (scree plot) and prints the cumulative variance.
-
-    Args:
-        df_final (pd.DataFrame): The fully featurized DataFrame.
     """
 
     features = df_final.iloc[:, 29:].copy()
@@ -32,20 +29,16 @@ def analyze_pca_variance(df_final: pd.DataFrame):
 
     print(f"Number of features after removing zero-variance: {features_cleaned.shape[1]}")
 
-    # Convert back to DataFrame for scaling and PCA
     features_df = pd.DataFrame(features_cleaned)
 
-
-    # --- 2. Scale Features ---
+    # Scaling
     x_scaled = StandardScaler().fit_transform(features_df)
 
-
-    # --- 3. Compute PCA ---
+    # Compute PCA
     pca = PCA(n_components=10)
     pca.fit(x_scaled) # No need to store the transformed data (x_pca) for this analysis
 
 
-    # --- 4. Plot and Print Results ---
     print("\n--- Principal Component Analysis (PCA) ---")
 
     plt.figure(figsize=(8, 6))
