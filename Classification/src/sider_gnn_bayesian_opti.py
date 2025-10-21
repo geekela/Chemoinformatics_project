@@ -32,7 +32,8 @@ def objective(trial, train_loader, val_loader):
         callbacks=[early_stopping_callback],
         logger=wandb_logger,
         enable_checkpointing=False,
-        accelerator="auto"
+        accelerator="auto",
+        log_every_n_steps=10
     )
 
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
