@@ -80,7 +80,7 @@ class MPNN_SIDER(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         out = self.forward(batch)
         loss = F.binary_cross_entropy_with_logits(out, batch.y)
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch.num_graphs)
 
         preds = torch.sigmoid(out)
         self.train_outputs.append({"preds": preds, "labels": batch.y})
@@ -102,7 +102,7 @@ class MPNN_SIDER(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         out = self.forward(batch)
         loss = F.binary_cross_entropy_with_logits(out, batch.y)
-        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, batch_size=batch.num_graphs)
 
         preds = torch.sigmoid(out)
         self.val_outputs.append({"preds": preds, "labels": batch.y})
