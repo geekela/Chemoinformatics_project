@@ -9,8 +9,8 @@ from Classification.src.sider_gnn import SIDERGraphDataset, MPNN_SIDER
 def objective(trial, train_loader, val_loader):
 
     params = {
-        'lr': trial.suggest_float('lr', 1e-4, 1e-2, log=True),
-        'hidden_dim': trial.suggest_int('hidden_dim', 32, 128)
+        'lr': trial.suggest_float('lr', 1e-4, 2e-3, log=True),
+        'hidden_dim': trial.suggest_categorical('hidden_dim', [64, 128])
     }
 
     model = MPNN_SIDER(
@@ -19,7 +19,7 @@ def objective(trial, train_loader, val_loader):
         lr=params['lr']
     )
 
-    early_stopping_callback = EarlyStopping(monitor="val_loss", patience=5, mode="min")
+    early_stopping_callback = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
     wandb_logger = WandbLogger(
         project="SIDER_GNN_Bayesian_Opt",
