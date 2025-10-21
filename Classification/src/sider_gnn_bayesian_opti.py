@@ -37,6 +37,6 @@ def objective(trial, train_loader, val_loader):
 
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
-    final_val_loss = trainer.callback_metri#cs.get("val_loss", float('inf'))
+    final_val_loss = trainer.callback_metrics.get("val_loss", float('inf'))
 
     return final_val_loss
