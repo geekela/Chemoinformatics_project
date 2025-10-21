@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
-from src.sider_gnn import SIDERGraphDataset, MPNN_SIDER
+from Classification.src.sider_gnn import SIDERGraphDataset, MPNN_SIDER
 
 def objective(trial, train_loader, val_loader):
 
