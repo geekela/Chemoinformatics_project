@@ -17,7 +17,6 @@ def run_base_regressors(X_train, X_test, y_train, y_test, feat_name, verbose=Tru
     if verbose:
         print(f"Running models for featurizer: {feat_name}")
 
-    # --- Logique de Scaling Corrigée ---
     binary_like = np.isin(X_train.ravel()[: min(10000, X_train.size)], [0, 1]).all()
     
     X_train_scaled = X_train
@@ -163,17 +162,15 @@ def run_base_regressors_kv(features_dict,n_splits=10,verbose=True):
     return results_df, best_models
 
 
-def run_gridsearch(features_dict, verbose=True):
-    
+def run_gridsearch(features_dict, X_train, X_test, y_train, y_test, verbose=True):
     results = []
     trained_models = {}
 
-    # Models + parameter grids
     models = {
         "RandomForest": (RandomForestRegressor(random_state=0),
                          {"model__n_estimators": [100, 200, 300], "model__max_depth": [None, 10, 20]}),
         "XGBoost": (XGBRegressor(random_state=0, verbosity=0),
-                    {"model__n_estimators": [100, 200, 300], "model__learning_rate": [0.01, 0.1], "model__max_depth": [None,10, 20]}),
+                    {"model__n_estimators": [100, 200, 300], "model__learning_rate": [0.01, 0.1], "model__max_depth": [None, 10, 20]}),
         "SVR": (SVR(kernel="rbf"),
                 {"model__C": [1.0, 3.0], "model__epsilon": [0.1, 0.2], "model__gamma": ["scale", "auto"]})
     }
@@ -182,9 +179,8 @@ def run_gridsearch(features_dict, verbose=True):
         if verbose:
             print(f" Featurizer: {feat_name}")
 
-        X = df_feat.drop(columns=["canonical_smiles", "pIC50"], axis=1).values
-        y = df_feat["pIC50"].values
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        # The X and y are now taken from the function arguments
+        # X_train, X_test, y_train, y_test are already defined
 
         binary_like = np.isin(X_train.ravel()[: min(10000, X_train.size)], [0, 1]).all()
         scaler = StandardScaler() if not binary_like else None
@@ -202,6 +198,7 @@ def run_gridsearch(features_dict, verbose=True):
                 estimator=pipeline,
                 param_grid=param_grid,
                 scoring="r2",
+                cv=3 # Added for speed
             )
             grid.fit(X_train, y_train)
             estimator = grid.best_estimator_
@@ -227,5 +224,3 @@ def run_gridsearch(features_dict, verbose=True):
         print(results_df)
 
     return results_df, trained_models
-
-    
