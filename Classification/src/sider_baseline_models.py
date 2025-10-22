@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multiclass import OneVsRestClassifier
@@ -9,7 +10,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import roc_auc_score
 from xgboost import XGBClassifier
 
-def train_and_evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test):
+def train_and_evaluate_models(X_train, X_test, y_train, y_test, feat,verbose=True):
     """
     Performs the complete multi-label modeling pipeline using pre-split and pre-scaled data.
     """
@@ -17,7 +18,20 @@ def train_and_evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_
     # ======================================================================
     # 2. INTERNAL EVALUATION AND ANALYSIS FUNCTIONS
     # ======================================================================
+    binary_like = np.isin(X_train.values.ravel()[: min(10000, X_train.size)], [0, 1]).all()
+    
+    X_train_scaled = X_train
+    X_test_scaled = X_test
+    scaler = None
 
+    if not binary_like:
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        if verbose:
+            print("Applied StandardScaler (continuous features detected).")
+    elif verbose:
+        print("Skipping scaling (binary features detected).")
     def analyze_individual_labels(y_true, y_score, label_names, model_name):
         label_scores = []
         for i, label_name in enumerate(label_names):
@@ -44,57 +58,85 @@ def train_and_evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_
         detailed_df = analyze_individual_labels(y_test_data, y_pred_proba_final, y_test_data.columns, 'AUC-ROC')
         return roc_auc_macro, detailed_df
 
-    def print_final_summary(summary_df, detailed_dfs):
+    def print_final_summary(summary_df, detailed_dfs, feat):
+        if feat:
+            summary_df = summary_df.copy()  # avoid modifying original
+            summary_df.insert(0, 'Features', feat)
         print("\n" + "="*80)
-        print("                     MODEL PERFORMANCE SUMMARY (MACRO AUC-ROC)")
+        print(f"                     MODEL PERFORMANCE SUMMARY")
+        if feat:
+            print(f"                     Features: {feat}")
         print("="*80)
+
         summary_df = summary_df.sort_values(by='Macro AUC-ROC', ascending=False)
         print(summary_df.to_string(float_format="{:.4f}".format))
 
-        print("\n" + "="*80)
-        print("           DETAILED LABEL ANALYSIS (TOP 5 & BOTTOM 5 AUC-ROC ACROSS MODELS)")
-        print("="*80)
+        # Detailed label analysis
         final_detailed_df = detailed_dfs[0]
         for df in detailed_dfs[1:]:
             final_detailed_df = pd.merge(final_detailed_df, df, on='Label', how='outer')
         final_detailed_df.columns = ['Label', 'Random Forest', 'Logistic Regression', 'SVM', 'XGBoost']
         final_detailed_df['Average AUC'] = final_detailed_df.iloc[:, 1:].mean(axis=1)
 
-        print("\n--- TOP 5 LABELS (Easiest Classes on Average) ---")
+        print("\n--- TOP 5 LABELS ---")
         print(final_detailed_df.sort_values(by='Average AUC', ascending=False).head(5)
-              .drop(columns=['Average AUC']).to_string(index=False, float_format="{:.4f}".format))
+          .drop(columns=['Average AUC']).to_string(index=False, float_format="{:.4f}".format))
 
-        print("\n--- BOTTOM 5 LABELS (Hardest Classes on Average) ---")
+        print("\n--- BOTTOM 5 LABELS ---")
         print(final_detailed_df.sort_values(by='Average AUC', ascending=True).head(5)
-              .drop(columns=['Average AUC']).to_string(index=False, float_format="{:.4f}".format))
-
+          .drop(columns=['Average AUC']).to_string(index=False, float_format="{:.4f}".format))
     # ======================================================================
     # 3. MODEL TRAINING & OPTIMIZATION
     # ======================================================================
 
     # --- Tree-based models (use UNSCALED data) ---
-    print("\n--- Optimizing Random Forest... ---")
+    print("\n--- Hyperparameter search: Random Forest... ---")
     rf_base = RandomForestClassifier(random_state=0)
     rf_multilabel_wrapper = MultiOutputClassifier(rf_base, n_jobs=-1)
-    param_grid_rf = {'estimator__n_estimators': [50, 100], 'estimator__max_depth': [5, 10]}
-    grid_search_rf = GridSearchCV(estimator=rf_multilabel_wrapper, param_grid=param_grid_rf, cv=3, scoring='roc_auc_ovr', n_jobs=-1)
-    grid_search_rf.fit(X_train, y_train)
+    param_grid_rf = {'estimator__n_estimators': [10, 50, 100,200, 300], 'estimator__max_depth': [5, 10,15, 20,25]}
+    grid_search_rf = GridSearchCV(estimator=rf_multilabel_wrapper, param_grid=param_grid_rf, cv=5, scoring='roc_auc_ovr', n_jobs=-1)
+    grid_search_rf.fit(X_train_scaled, y_train)
     best_rf_model = grid_search_rf.best_estimator_
     print(f"RF - Best Hyperparameters: {grid_search_rf.best_params_}")
 
-    print("--- Training XGBoost... ---")
+    """print("--- Training XGBoost... ---")
     xgb_base = XGBClassifier(objective='binary:logistic', eval_metric='logloss', use_label_encoder=False, random_state=0)
     multilabel_model_xgb = MultiOutputClassifier(xgb_base, n_jobs=-1)
-    multilabel_model_xgb.fit(X_train, y_train)
+    multilabel_model_xgb.fit(X_train, y_train)"""
+    
+    print("\n--- Hyperparameter search: XGBoost ---")
+    xgb_base = XGBClassifier(objective='binary:logistic', eval_metric='logloss', use_label_encoder=False, random_state=0)
+    xgb_multi = MultiOutputClassifier(xgb_base, n_jobs=-1)
+    param_grid_xgb = {'estimator__n_estimators': [10, 50, 100, 200, 300],
+                      'estimator__max_depth': [5, 10, 15, 20,25]}
+    grid_xgb = GridSearchCV(xgb_multi, param_grid_xgb, cv=5, scoring='roc_auc_ovr', n_jobs=-1)
+    grid_xgb.fit(X_train_scaled, y_train)
+    best_xgb_model = grid_xgb.best_estimator_
+
 
     # --- Scale-sensitive models (use SCALED data) ---
-    print("--- Training Logistic Regression... ---")
+    """print("--- Training Logistic Regression... ---")
     multilabel_model_lr = OneVsRestClassifier(LogisticRegression(solver='liblinear', random_state=0))
-    multilabel_model_lr.fit(X_train_scaled, y_train)
+    multilabel_model_lr.fit(X_train_scaled, y_train)"""
+    
+    # --- Logistic Regression gridsearch ---
+    print("\n--- Hyperparameter search: Logistic Regression ---")
+    lr_base = OneVsRestClassifier(LogisticRegression(solver='liblinear', random_state=0))
+    param_grid_lr = {'estimator__C': [0.1, 1.0, 2]}
+    grid_lr = GridSearchCV(lr_base, param_grid_lr, cv=5, scoring='roc_auc_ovr', n_jobs=-1)
+    grid_lr.fit(X_train_scaled, y_train)
+    best_lr_model = grid_lr.best_estimator_
 
-    print("--- Training SVM... (Warning: May be very slow) ---")
+    # --- SVM ---
+    print("\n--- Hyperparameter search: SVM ---")
+    svm_base = OneVsRestClassifier(SVC(kernel='linear', probability=True, random_state=0))
+    param_grid_svm = {'estimator__C': [0.1, 1.0, 10]}
+    grid_svm = GridSearchCV(svm_base, param_grid_svm, cv=5, scoring='roc_auc_ovr', n_jobs=-1)
+    grid_svm.fit(X_train_scaled, y_train)
+    best_svm_model = grid_svm.best_estimator_
+    """print("--- Training SVM... (Warning: May be very slow) ---")
     multilabel_model_svm = OneVsRestClassifier(SVC(kernel='linear', probability=True, random_state=0))
-    multilabel_model_svm.fit(X_train_scaled, y_train)
+    multilabel_model_svm.fit(X_train_scaled, y_train)"""
 
     # ======================================================================
     # 4. RESULTS
@@ -104,21 +146,21 @@ def train_and_evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_
     results = {}
     all_detailed_dfs = []
 
-    # Evaluate tree-based models on UNSCALED test data
-    macro_rf, detailed_rf = evaluate_multilabel_model_internal(best_rf_model, X_test, y_test)
+    # Evaluate tree-based models on  test data
+    macro_rf, detailed_rf = evaluate_multilabel_model_internal(best_rf_model, X_test_scaled, y_test)
     results['Random Forest'] = {'Macro AUC-ROC': macro_rf, 'Hyperparameters': str(grid_search_rf.best_params_)}
     all_detailed_dfs.append(detailed_rf.rename(columns={'AUC-ROC': 'Random Forest'}))
 
-    macro_xgb, detailed_xgb = evaluate_multilabel_model_internal(multilabel_model_xgb, X_test, y_test)
+    macro_xgb, detailed_xgb = evaluate_multilabel_model_internal( best_xgb_model, X_test_scaled, y_test)
     results['XGBoost'] = {'Macro AUC-ROC': macro_xgb, 'Hyperparameters': 'Defaults'}
     all_detailed_dfs.append(detailed_xgb.rename(columns={'AUC-ROC': 'XGBoost'}))
 
-    # Evaluate scale-sensitive models on SCALED test data
-    macro_lr, detailed_lr = evaluate_multilabel_model_internal(multilabel_model_lr, X_test_scaled, y_test)
+
+    macro_lr, detailed_lr = evaluate_multilabel_model_internal(best_lr_model, X_test_scaled, y_test)
     results['Logistic Regression'] = {'Macro AUC-ROC': macro_lr, 'Hyperparameters': 'C=1.0 (Default), Solver=liblinear'}
     all_detailed_dfs.append(detailed_lr.rename(columns={'AUC-ROC': 'Logistic Regression'}))
 
-    macro_svm, detailed_svm = evaluate_multilabel_model_internal(multilabel_model_svm, X_test_scaled, y_test)
+    macro_svm, detailed_svm = evaluate_multilabel_model_internal(best_svm_model, X_test_scaled, y_test)
     results['SVM'] = {'Macro AUC-ROC': macro_svm, 'Hyperparameters': 'Kernel=linear, C=1.0 (Default)'}
     all_detailed_dfs.append(detailed_svm.rename(columns={'AUC-ROC': 'SVM'}))
 
@@ -126,4 +168,12 @@ def train_and_evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_
     summary_df['Hyperparameters'] = summary_df['Hyperparameters'].astype(str)
 
     # FINAL OUTPUT
-    print_final_summary(summary_df, all_detailed_dfs)
+    print_final_summary(summary_df, all_detailed_dfs,feat)
+    return {
+        "Random Forest": best_rf_model,
+        "XGBoost": best_xgb_model,
+        "Logistic Regression": best_lr_model,
+        "SVM": best_svm_model,
+        "Summary": summary_df,
+        "Detailed": all_detailed_dfs
+    }

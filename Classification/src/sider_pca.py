@@ -21,6 +21,9 @@ def analyze_pca_variance(df_final: pd.DataFrame):
     if 'FingerPrint_Obj' in features.columns:
         features.drop(columns=['FingerPrint_Obj'], inplace=True)
 
+    #features = features.select_dtypes(include=[np.number])
+
+
     print(f"Number of features before removing zero-variance: {features.shape[1]}")
 
     # Remove zero-variance features
@@ -30,9 +33,15 @@ def analyze_pca_variance(df_final: pd.DataFrame):
     print(f"Number of features after removing zero-variance: {features_cleaned.shape[1]}")
 
     features_df = pd.DataFrame(features_cleaned)
-
+    features_df=features_df.dropna(axis=1)
+    print(f" NA value  in features_df if any: {features_df.isnull().sum().sum()}")
     # Scaling
     x_scaled = StandardScaler().fit_transform(features_df)
+    print(f"Scaled features NA value if any: {np.isnan(x_scaled).sum()}")
+    
+    #drop nan from scaled
+    print(x_scaled.shape)
+    x_scaled=x_scaled[~np.isnan(x_scaled)]
 
     # Compute PCA
     pca = PCA(n_components=10)
