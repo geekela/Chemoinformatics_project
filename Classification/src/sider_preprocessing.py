@@ -1,6 +1,5 @@
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import PandasTools
 import numpy as np
 from typing import List
 
@@ -55,11 +54,12 @@ def sider_preprocessing(df: pd.DataFrame):
     col_to_move = df.pop(last_col_name)
     df.insert(0, last_col_name, col_to_move)
 
-    PandasTools.AddMoleculeColumnToFrame(df, smilesCol='canonical_smiles', molCol='Molecule')
+    # Create molecule column without using PandasTools for better compatibility
+    df['Molecule'] = df['canonical_smiles'].apply(lambda x: Chem.MolFromSmiles(x))
 
     print(f"\n--- SIDER Preprocessing Report ---\n")
 
     print(f"Final dataset size: {df.shape}\n")
-    display(df)
+    # display(df)  # Only works in Jupyter
 
     return df

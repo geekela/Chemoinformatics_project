@@ -161,6 +161,9 @@ cython_debug/
 # VS Code
 .vscode/
 
+# Claude Code
+.claude/
+
 # macOS
 .DS_Store
 .AppleDouble
@@ -255,6 +258,7 @@ $RECYCLE.BIN/
 # Log files
 *.log
 logs/
+lightning_logs/
 
 # Temporary files
 *.tmp
