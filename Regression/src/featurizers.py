@@ -2,6 +2,7 @@ import deepchem as dc
 import numpy as np
 import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
+import logging
 
 def featurize_molecules(
     df,
