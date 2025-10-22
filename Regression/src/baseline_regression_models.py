@@ -10,81 +10,67 @@ from sklearn.metrics import r2_score, mean_squared_error
 import numpy as np
 import pandas as pd
 
-def run_base_regressors(features_dict,verbose=True):
-    #Run multiple regressors(RandomForest, XGBoost, SVR) for each featurizer dataset.
+def run_base_regressors(X_train, X_test, y_train, y_test, feat_name, verbose=True):
     results = []
     trained_models = {}
     
-    for feat_name, df_feat in features_dict.items():
+    if verbose:
+        print(f"Running models for featurizer: {feat_name}")
+
+    # --- Logique de Scaling Corrigée ---
+    binary_like = np.isin(X_train.ravel()[: min(10000, X_train.size)], [0, 1]).all()
+    
+    X_train_scaled = X_train
+    X_test_scaled = X_test
+    scaler = None
+
+    if not binary_like:
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
         if verbose:
-            print(f"Running models for featurizer: {feat_name}")
+            print("Applied StandardScaler (continuous features detected).")
+    elif verbose:
+        print("Skipping scaling (binary features detected).")
 
-        #print(df_feat.columns)
+    models = {
+        "RandomForest": RandomForestRegressor(n_estimators=300, random_state=0),
+        "XGBoost": XGBRegressor(n_estimators=300, learning_rate=0.01, random_state=0),
+        "SVR": SVR(kernel="rbf", C=3.0, epsilon=0.1)
+    }
 
-        X = df_feat.drop(columns=["canonical_smiles", "pIC50"],axis=1).values
-        y = df_feat["pIC50"].values
+    trained_models[feat_name] = {}
 
-        #print(y)
+    for model_name, model in models.items():
+        if verbose:
+            print(f"Training {model_name}...")
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-
-        #check if features are binary or not
-        binary_like = np.isin(X_train.ravel()[: min(10000, X_train.size)], [0, 1]).all()
-
-        if not binary_like:
-            scaler = StandardScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_test = scaler.transform(X_test)
-            if verbose:
-                print("Applied Standard scaling (continuous features detected).")
+        # Entraîner les modèles sur les données appropriées
+        if model_name in ["SVR"]:
+             model.fit(X_train_scaled, y_train)
+             y_pred = model.predict(X_test_scaled)
         else:
-            scaler = None
-            if verbose:
-                print(" Skipping scaling (binary fingerprint detected).")
+             model.fit(X_train, y_train)
+             y_pred = model.predict(X_test)
 
+        r2 = r2_score(y_test, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
+        results.append({
+            "Featurizer": feat_name,
+            "Model": model_name,
+            "R2": r2,
+            "RMSE": rmse
+        })
 
-
-        #standardize measurements
-        scaler = MinMaxScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-
-
-        models = {
-            "RandomForest": RandomForestRegressor(n_estimators=300, random_state=0),
-            "XGBoost": XGBRegressor(n_estimators=300, learning_rate=0.01, random_state=0),
-            "SVR": SVR(kernel="rbf", C=3.0, epsilon=0.1)
+        trained_models[feat_name][model_name] = {
+            "model": model,
+            "scaler": scaler,
+            "r2": r2,
+            "rmse": rmse
         }
 
-        trained_models[feat_name] = {}
-
-        for model_name, model in models.items():
-            if verbose:
-                print(f"Training {model_name}...")
-
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-
-            r2 = r2_score(y_test, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
-            results.append({
-                "Featurizer": feat_name,
-                "Model": model_name,
-                "R2": r2,
-                "RMSE": rmse
-            })
-
-            trained_models[feat_name][model_name] = {
-                "model": model,
-                "scaler": scaler,
-                "r2": r2,
-                "rmse": rmse
-            }
-
-    results_df = pd.DataFrame(results).sort_values(["Featurizer", "R2"], ascending=[True, False])
+    results_df = pd.DataFrame(results).sort_values("R2", ascending=False)
 
     if verbose:
         print("Finished training all models.")
