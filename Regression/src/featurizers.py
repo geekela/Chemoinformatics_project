@@ -12,7 +12,12 @@ def featurize_molecules(
     remove_zero_variance=True,
     concatenate=False,
     return_dataframe=True):
-    
+
+    # Hide RDKit warning    
+    rdkit_logger = logging.getLogger('rdkit')
+    original_level = rdkit_logger.level
+    rdkit_logger.setLevel(logging.ERROR)
+
     if methods is None:
         methods = ["rdkit", "maccs"]
 
@@ -55,6 +60,10 @@ def featurize_molecules(
 
         all_features[method] = df_feat
 
+    # Restore warning    
+    rdkit_logger.setLevel(original_level)
+
+        
     # Concatenate if requested
     if concatenate:
         df_concat = df[[smiles_col]].copy()
