@@ -101,12 +101,14 @@ class MLP_SIDER(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='max', factor=0.5, patience=5, monitor='val_roc_auc'
+            optimizer, mode='max', factor=0.5, patience=5
         )
         return {
             'optimizer': optimizer,
             'lr_scheduler': {
                 'scheduler': scheduler,
-                'monitor': 'val_roc_auc'
+                'monitor': 'val_roc_auc',
+                'interval': 'epoch',
+                'frequency': 1
             }
         }
