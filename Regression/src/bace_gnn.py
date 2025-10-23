@@ -71,15 +71,17 @@ class BACEGraphDataset(InMemoryDataset):
 
 class MPNN_BACE(pl.LightningModule):
 
-    def __init__(self, hidden_dim=64, out_dim=1, std=1.0, lr=1e-3):
+    def __init__(self, hidden_dim=64, out_dim=1, mean=0.0, std=1.0, lr=1e-3):
         """
         Args:
             hidden_dim: Embedding dimension (default: 64)
             out_dim: Output dimension (always 1 for single-target regression)
+            mean: Mean of normalized targets (for denormalization)
             std: Standard deviation of normalized targets (for denormalization)
             lr: Learning rate (default: 1e-3)
         """
         super().__init__()
+        self.mean = mean  # Store for denormalizing predictions
         self.std = std  # Store for denormalizing predictions
         self.lr = lr
 
@@ -142,7 +144,9 @@ class MPNN_BACE(pl.LightningModule):
         all_labels = torch.cat([x['labels'] for x in self.train_outputs]).cpu().detach()
 
         # Calculate RMSE in ORIGINAL space (denormalized)
-        rmse = torch.sqrt(F.mse_loss(all_preds * self.std, all_labels * self.std))
+        preds_denorm = all_preds * self.std + self.mean
+        labels_denorm = all_labels * self.std + self.mean
+        rmse = torch.sqrt(F.mse_loss(preds_denorm, labels_denorm))
         self.log("train_rmse", rmse, prog_bar=True)
 
         self.train_outputs.clear()  # Free memory
@@ -165,7 +169,9 @@ class MPNN_BACE(pl.LightningModule):
         all_labels = torch.cat([x['labels'] for x in self.val_outputs]).cpu().detach()
 
         # RMSE in original space
-        rmse = torch.sqrt(F.mse_loss(all_preds * self.std, all_labels * self.std))
+        preds_denorm = all_preds * self.std + self.mean
+        labels_denorm = all_labels * self.std + self.mean
+        rmse = torch.sqrt(F.mse_loss(preds_denorm, labels_denorm))
         self.log("val_rmse", rmse, prog_bar=True)
 
         self.val_outputs.clear()
@@ -180,8 +186,10 @@ class MPNN_BACE(pl.LightningModule):
         all_preds = torch.cat([x['preds'] for x in self.test_outputs]).cpu().detach()
         all_labels = torch.cat([x['labels'] for x in self.test_outputs]).cpu().detach()
 
-        # Calculate metrics in original space
-        mse = F.mse_loss(all_preds * self.std, all_labels * self.std)
+        # Calculate metrics in original space (denormalized)
+        preds_denorm = all_preds * self.std + self.mean
+        labels_denorm = all_labels * self.std + self.mean
+        mse = F.mse_loss(preds_denorm, labels_denorm)
         rmse = torch.sqrt(mse)
 
         self.log("test_mse", mse)
