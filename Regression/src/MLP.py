@@ -5,20 +5,6 @@ from torch.utils.data import Dataset
 from sklearn.metrics import roc_auc_score
 import numpy as np
 
-
-class BACEDataset(Dataset):
-    """PyTorch Dataset wrapper for BACE data."""
-    def __init__(self, X, y):
-        self.X = torch.FloatTensor(X)
-        self.y = torch.FloatTensor(y.values if hasattr(y, 'values') else y)
-
-    def __len__(self):
-        return len(self.X)
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.y[idx]
-
-
 class MLP_BACE(pl.LightningModule):
     """
     Multi-Layer Perceptron for BAEC regression.
@@ -31,7 +17,7 @@ class MLP_BACE(pl.LightningModule):
         lr: Learning rate
     """
 
-    def __init__(self, input_dim, hidden_dims=[512, 256, 128], out_dim=27, dropout=0.3, lr=0.001):
+    def __init__(self, input_dim, hidden_dims=[512, 256, 128], out_dim=1, dropout=0.3, lr=0.001):
         super().__init__()
         self.save_hyperparameters()
         self.lr = lr
@@ -76,14 +62,15 @@ class MLP_BACE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        return {'preds': probs, 'targets': y}
+        return {'preds': logits, 'targets': y}
 
     def test_epoch_end(self, outputs):
         all_preds = torch.cat([x['preds'] for x in outputs])
         all_targets = torch.cat([x['targets'] for x in outputs])
         
         # Calculate Root Mean Squared Error (RMSE)
-        rmse = torch.sqrt(self.criterion(all_preds, all_targets))
+        loss_fn = nn.MSELoss() 
+        rmse = torch.sqrt(loss_fn(all_preds, all_targets))
         
         self.log('test_rmse', rmse, prog_bar=True)
         return {'test_rmse': rmse}
