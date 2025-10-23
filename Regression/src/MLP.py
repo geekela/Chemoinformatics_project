@@ -62,18 +62,18 @@ class MLP_BACE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        return {'preds': logits, 'targets': y}
+        loss = self.criterion(logits, y)
+        self.log('test_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        return loss
+        
 
-    def test_epoch_end(self, outputs):
-        all_preds = torch.cat([x['preds'] for x in outputs])
-        all_targets = torch.cat([x['targets'] for x in outputs])
-        
-        # Calculate Root Mean Squared Error (RMSE)
-        loss_fn = nn.MSELoss() 
-        rmse = torch.sqrt(loss_fn(all_preds, all_targets))
-        
-        self.log('test_rmse', rmse, prog_bar=True)
-        return {'test_rmse': rmse}
+    def on_test_epoch_end(self):
+        if 'test_loss' in self.trainer.logged_metrics:
+            test_mse = self.trainer.logged_metrics['test_loss']
+        else:
+            return 
+        test_rmse = torch.sqrt(test_mse)
+        self.log('test_rmse', test_rmse, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
