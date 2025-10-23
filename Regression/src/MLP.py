@@ -6,8 +6,8 @@ from sklearn.metrics import roc_auc_score
 import numpy as np
 
 
-class SIDERDataset(Dataset):
-    """PyTorch Dataset wrapper for SIDER data."""
+class BACEDataset(Dataset):
+    """PyTorch Dataset wrapper for BACE data."""
     def __init__(self, X, y):
         self.X = torch.FloatTensor(X)
         self.y = torch.FloatTensor(y.values if hasattr(y, 'values') else y)
@@ -19,14 +19,14 @@ class SIDERDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-class MLP_SIDER(pl.LightningModule):
+class MLP_BACE(pl.LightningModule):
     """
-    Multi-Layer Perceptron for SIDER multi-label classification.
+    Multi-Layer Perceptron for BAEC regression.
 
     Args:
         input_dim: Number of input features
         hidden_dims: List of hidden layer dimensions
-        out_dim: Number of output labels (27 for SIDER)
+        out_dim: 1 predicted value 
         dropout: Dropout probability for regularization
         lr: Learning rate
     """
@@ -48,13 +48,13 @@ class MLP_SIDER(pl.LightningModule):
             layers.append(nn.Dropout(dropout))
             prev_dim = hidden_dim
 
-        # Output layer (no activation - using BCEWithLogitsLoss)
+        # Output layer
         layers.append(nn.Linear(prev_dim, out_dim))
 
         self.network = nn.Sequential(*layers)
 
-        # Loss function for multi-label classification
-        self.criterion = nn.BCEWithLogitsLoss()
+        # Loss function for regression
+        self.criterion = nn.MSELoss()
 
     def forward(self, x):
         return self.network(x)
@@ -76,8 +76,17 @@ class MLP_SIDER(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        probs = torch.sigmoid(logits)
         return {'preds': probs, 'targets': y}
+
+    def test_epoch_end(self, outputs):
+        all_preds = torch.cat([x['preds'] for x in outputs])
+        all_targets = torch.cat([x['targets'] for x in outputs])
+        
+        # Calculate Root Mean Squared Error (RMSE)
+        rmse = torch.sqrt(self.criterion(all_preds, all_targets))
+        
+        self.log('test_rmse', rmse, prog_bar=True)
+        return {'test_rmse': rmse}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
