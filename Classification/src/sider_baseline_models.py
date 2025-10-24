@@ -147,10 +147,10 @@ def train_and_evaluate_models(X_train, X_test, y_train, y_test, feat,verbose=Tru
     multilabel_model_xgb.fit(X_train, y_train)"""
     
     print("\n--- Hyperparameter search: XGBoost ---")
-    xgb_base = XGBClassifier(objective='binary:logistic', eval_metric='logloss', use_label_encoder=False, random_state=0)
+    xgb_base = XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=0)
     xgb_multi = MultiOutputClassifier(xgb_base, n_jobs=-1)
-    param_grid_xgb = {'estimator__n_estimators': [10, 50, 100, 200, 300],
-                      'estimator__max_depth': [5, 10, 15, 20,25]}
+    param_grid_xgb = {'estimator__n_estimators': [10, 50, 100, 200],
+                      'estimator__max_depth': [5, 10, 15, 20, 30]}
     grid_xgb = GridSearchCV(xgb_multi, param_grid_xgb, cv=5, scoring='roc_auc_ovr', n_jobs=-1)
     grid_xgb.fit(X_train_scaled, y_train)
     best_xgb_model = grid_xgb.best_estimator_
